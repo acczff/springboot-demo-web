@@ -8,7 +8,7 @@ import { userApi } from '../api/user';
 
 const userStore = useUserStore();
 
-const username = async () => {
+const fetchCurrentUser = async () => {
     try {
         const res: any = await userApi.getCurrentUser();
         console.log('老板：拿到用户信息 ->', res);
@@ -20,7 +20,7 @@ const username = async () => {
 
 onMounted(() => {
     console.log('老板：我来查看员工了！');
-    username();
+    fetchCurrentUser();
 })
 
 </script>

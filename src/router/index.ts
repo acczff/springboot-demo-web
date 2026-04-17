@@ -1,20 +1,28 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import Home from '../views/Home.vue'
+import MainLayout from '../layouts/MainLayout.vue'
 
 // 这里的配置就是“交通调度员”的规则本
 const router = createRouter({
-  history: createWebHistory(), 
   
+  history: createWebHistory(), 
   routes: [
     { path: '/', redirect: '/login' }, 
     { path: '/login', component: Login }, 
-    { path: '/home', component: Home }    
+    { 
+      path: '/', 
+      component: MainLayout,
+      children: [ 
+        { path: 'home', component: Home }
+      ]
+    }    
   ]
+
 })
 
 // 🌟 新增：公司的“门禁安保系统”（全局路由守卫）
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   // to: 你要去哪个房间？
   // from: 你从哪个房间来？
   // next: 保安按下的放行按钮（必须调用，不然就会卡在过道里看到白屏）
@@ -26,7 +34,6 @@ router.beforeEach((to, from, next) => {
     if (hasBadge) {
       next(); // 检测到工牌，放行！
     } else {
-      alert('⚠️ 没登录想闯空门？给我回登录页！');
       next('/login'); // 没工牌，一脚踢回登录页
     }
   } else {

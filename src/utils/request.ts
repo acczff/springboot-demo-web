@@ -45,7 +45,7 @@ request.interceptors.response.use(
 
 
             // 不管是 401、404还是500，统统用 Promise.reject 截断，不让它们正常流转到业务代码的 try 块
-            return Promise.reject(new Error(res.message));
+            return Promise.reject(res.message);
         }
 
         console.log('✅ 品控员：后厨正常交差了！');
