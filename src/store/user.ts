@@ -6,7 +6,7 @@ import { ref } from 'vue'
 export const useUserStore = defineStore('user', () => {
   
   // 1. 存放在仓库里的公共物资（State）
-  const username = ref('未登录的神秘人')
+  const username = ref('')
 
   const employeeList = ref([
     { name: '李四', age: 20 },

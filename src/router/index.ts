@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/Login.vue'
-import Home from '../views/Home.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
 // 这里的配置就是“交通调度员”的规则本
@@ -9,12 +7,13 @@ const router = createRouter({
   history: createWebHistory(), 
   routes: [
     { path: '/', redirect: '/login' }, 
-    { path: '/login', component: Login }, 
+    { path: '/login', component: () => import('../views/Login.vue') }, 
     { 
       path: '/', 
       component: MainLayout,
       children: [ 
-        { path: 'home', component: Home }
+        { path: 'home', component: () => import('../views/Home.vue') },
+        { path: 'users', component: () => import('../views/Users.vue') },
       ]
     }    
   ]
@@ -27,7 +26,7 @@ router.beforeEach((to, _from, next) => {
   // from: 你从哪个房间来？
   // next: 保安按下的放行按钮（必须调用，不然就会卡在过道里看到白屏）
 
-  if (to.path === '/home') {
+  if (to.path !== '/login') {
     // 如果想进总部大厅查生死簿，保安要查“工牌”（这里我们先去浏览器的本地存储里找 token）
     const hasBadge = localStorage.getItem('token'); 
     

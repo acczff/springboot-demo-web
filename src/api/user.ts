@@ -15,5 +15,19 @@ export const userApi = {
   getCurrentUser() {
     console.log('📝 专职点菜员：收到 Home.vue 客人的点菜需求，正前往服务台提交...');
     return request.get('/api/auth/me');
-  }
+  },
+
+  getUserList() {
+    console.log('📝 专职点菜员：收到 Users.vue 客人的点菜需求，正前往服务台提交...');
+    return request.get('/api/users');
+  },
+
+  createUser(data: any) {
+    return request.post('/api/users', data);
+  },
+
+  updateUser(id: number, data: any) {
+    return request.put(`/api/users/${id}`, data);
+  },
+
 }

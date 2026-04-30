@@ -47,146 +47,137 @@ const handleLogin = async () => {
 </script>
 
 <template>
+  <div class="login-page">
+    <div class="login-card">
+      <div class="login-logo">🛠️</div>
+      <h2 class="login-title">学习系统后台</h2>
+      <p class="login-subtitle">请登录您的账号</p>
 
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户登录</title>
-  </head>
-
-  <body>
-    <header>
-      <h1>用户登录</h1>
-    </header>
-    <main>
       <p v-if="errorMsg" class="error-tip">{{ errorMsg }}</p>
-      <form id="loginForm">
-        <div>
-          <label for="username">用户名：</label>
-          <input v-model="loginForm.account" type="text" id="username" name="username" required placeholder="请输入用户名">
-        </div>
-        <div>
-          <label for="password">密码：</label>
-          <input v-model="loginForm.password" type="password" id="password" name="password" required
-            placeholder="请输入密码">
-        </div>
-        <!-- <div>
-          <input type="checkbox" id="remember" name="remember">
-          <label for="remember">记住密码</label>
-        </div> -->
-        <div>
-          <button type="submit" id="loginbtn" @click.prevent="handleLogin" :disabled="isLoading">
-            <span v-if="isLoading">登录中...</span>
-            <span v-else>登录</span>
-          </button>
-        </div>
-      </form>
-    </main>
-    <footer>
-      <p>2026 学习系统</p>
-    </footer>
-  </body>
+
+      <div class="form-item">
+        <label>用户名</label>
+        <input v-model="loginForm.account" type="text" placeholder="请输入用户名" />
+      </div>
+      <div class="form-item">
+        <label>密码</label>
+        <input v-model="loginForm.password" type="password" placeholder="请输入密码" />
+      </div>
+
+      <button class="login-btn" @click.prevent="handleLogin" :disabled="isLoading">
+        <span v-if="isLoading">登录中...</span>
+        <span v-else>登 录</span>
+      </button>
+
+      <p class="login-footer">© 2026 学习系统</p>
+    </div>
+  </div>
 </template>
 
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Microsoft YaHei', Arial, sans-serif;
-  background-color: #f0f2f5;
+<style scoped>
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
-main {
-  background: white;
-  padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
+.login-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 48px 40px;
+  width: 380px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
 
-form div {
+.login-logo {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.login-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+  margin: 0 0 6px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  margin: 0 0 32px;
+}
+
+.form-item {
   margin-bottom: 20px;
 }
 
-label {
+.form-item label {
   display: block;
-  margin-bottom: 5px;
-  color: #555;
+  font-size: 14px;
   font-weight: 500;
+  color: #333;
+  margin-bottom: 6px;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="email"],
-input[type="tel"] {
+.form-item input {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 10px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 14px;
   box-sizing: border-box;
-}
-
-input[type="text"]:focus,
-input[type="password"]:focus,
-input[type="email"]:focus,
-input[type="tel"]:focus {
+  transition: border-color 0.2s;
   outline: none;
-  border-color: #007bff;
 }
 
-/* 8. 复选框样式 */
-input[type="checkbox"] {
-  margin-right: 8px;
+.form-item input:focus {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
 }
 
-/* 复选框的 label 改为行内显示 */
-input[type="checkbox"]+label {
-  display: inline;
-  font-weight: normal;
-}
-
-/* 9. 按钮样式 */
-button {
+.login-btn {
   width: 100%;
-  padding: 12px;
-  background-color: #1890ff;
-  color: white;
+  padding: 11px;
+  background: #1677ff;
+  color: #fff;
   border: none;
-  border-radius: 4px;
-  font-size: 16px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s;
+  margin-top: 8px;
+  transition: background 0.2s;
 }
 
-/* 按钮悬停效果 */
-button[type="submit"]:hover {
-  background-color: #40a9ff;
+.login-btn:hover:not(:disabled) {
+  background: #4096ff;
 }
 
-/* 10. 页脚样式 */
-footer {
+.login-btn:disabled {
+  background: #a0c4ff;
+  cursor: not-allowed;
+}
+
+.login-footer {
   text-align: center;
-  margin-top: 20px;
-  color: #999;
   font-size: 12px;
+  color: #bbb;
+  margin-top: 24px;
+  margin-bottom: 0;
 }
 
 .error-tip {
   color: #ff4d4f;
   background: #fff2f0;
   border: 1px solid #ffccc7;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 8px 12px;
-  margin-bottom: 16px;
-  font-size: 14px;
+  margin-bottom: 20px;
+  font-size: 13px;
 }
 </style>
