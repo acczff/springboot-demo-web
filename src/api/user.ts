@@ -13,20 +13,22 @@ export const userApi = {
 
   //获取用户信息
   getCurrentUser() {
-    console.log('📝 专职点菜员：收到 Home.vue 客人的点菜需求，正前往服务台提交...');
+    console.log('📝 专职点菜员：getCurrentUser');
     return request.get('/api/auth/me');
   },
 
-  getUserList() {
-    console.log('📝 专职点菜员：收到 Users.vue 客人的点菜需求，正前往服务台提交...');
-    return request.get('/api/users');
+  getUserList(pageNum: number, pageSize: number, keyword: string) {
+    console.log('📝 专职点菜员：getUserList');
+    return request.get('/api/users', { params: { pageNum, pageSize, keyword } });
   },
 
   createUser(data: any) {
+    console.log('📝 专职点菜员：createUser');
     return request.post('/api/users', data);
   },
 
   updateUser(id: number, data: any) {
+    console.log('📝 专职点菜员：updateUser');
     return request.put(`/api/users/${id}`, data);
   },
 

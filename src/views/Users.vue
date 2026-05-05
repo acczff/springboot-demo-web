@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { userApi } from '../api/user';
 
 // 表单数据
@@ -9,6 +9,11 @@ const form = ref({
   email: ''
 });
 const userList = ref<any[]>([]);
+const pageNum = ref(1)      // 当前第几页
+const pageSize = ref(10)    // 每页几条
+const total = ref(0)        // 总条数（从后端拿到后存起来）
+const totalPages = computed(() => Math.ceil(total.value / pageSize.value)); // 总页数（计算属性，根据 total 和 pageSize 计算得出）
+const keyword = ref('')   // 搜索关键词
 const showDialog = ref(false);
 const editId = ref<number | null>(null);
 
@@ -19,8 +24,9 @@ onMounted(
 );
 // 加载用户列表
 const loadUserList = async () => {
-  const res: any = await userApi.getUserList()
-  userList.value = res
+  const res: any = await userApi.getUserList(pageNum.value, pageSize.value, keyword.value);
+  userList.value = res.content;
+  total.value = res.totalElements;
 }
 // 提交
 const handleSubmit = async () => {
@@ -33,6 +39,11 @@ const handleSubmit = async () => {
   await loadUserList();
 };
 
+const handleSearch = () => {
+  pageNum.value = 1
+  loadUserList()
+}
+
 const openAddDialog = () => {
   editId.value = null;
   form.value = { username: '', password: '', email: '' };
@@ -44,6 +55,15 @@ const openEditDialog = (user: any) => {
   form.value = { username: user.username, password: '', email: user.email };
   showDialog.value = true;
 };
+
+const goToPage = (page: number) => {
+  // 1. 边界检查：page 不能小于 1，不能大于 totalPages
+  if (page < 1 || page > totalPages.value) {
+    return;
+  }
+  pageNum.value = page;
+  loadUserList();
+}
 </script>
 
 <template>
@@ -53,7 +73,11 @@ const openEditDialog = (user: any) => {
       <h2 class="page-title">用户管理</h2>
       <button class="btn btn-primary" @click="openAddDialog">+ 新增用户</button>
     </div>
-
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+      <input v-model="keyword" type="text" placeholder="搜索用户名或邮箱" class="search-input" @keyup.enter="handleSearch" />
+      <button class="btn btn-primary" @click="handleSearch">搜索</button>
+    </div>
     <!-- 表格 -->
     <div class="table-wrapper">
       <table class="table">
@@ -77,7 +101,15 @@ const openEditDialog = (user: any) => {
         </tbody>
       </table>
     </div>
+    <div class="pagination">
+      <span>总数为： {{ total }} 条</span>
+      <button @click="goToPage(pageNum - 1)" :disabled="pageNum === 1">上一页</button>
+      <button v-for="page in totalPages" :key="page" @click="goToPage(page)"
+        :class="{ 'page-active': page === pageNum }">{{ page }}</button>
+      <button @click="goToPage(pageNum + 1)" :disabled="pageNum === totalPages">下一页</button>
+      <span>第 {{ pageNum }} / {{ totalPages }} 页</span>
 
+    </div>
     <!-- 弹窗遮罩 -->
     <div v-if="showDialog" class="dialog-mask">
       <div class="dialog">
@@ -122,6 +154,26 @@ const openEditDialog = (user: any) => {
   margin: 0;
 }
 
+/* 搜索栏 */
+.search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  padding: 7px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 240px;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #1677ff;
+}
+
 /* 表格 */
 .table-wrapper {
   background: #fff;
@@ -158,13 +210,19 @@ const openEditDialog = (user: any) => {
 }
 
 .table th:nth-child(1),
-.table td:nth-child(1) { width: 80px; }
+.table td:nth-child(1) {
+  width: 80px;
+}
 
 .table th:nth-child(2),
-.table td:nth-child(2) { width: 160px; }
+.table td:nth-child(2) {
+  width: 160px;
+}
 
 .table th:nth-child(4),
-.table td:nth-child(4) { width: 100px; }
+.table td:nth-child(4) {
+  width: 100px;
+}
 
 .table tbody tr:last-child td {
   border-bottom: none;
@@ -253,5 +311,41 @@ const openEditDialog = (user: any) => {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+/* 分页 */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #555;
+}
+
+.pagination button {
+  padding: 5px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.pagination button:hover:not(:disabled) {
+  border-color: #1677ff;
+  color: #1677ff;
+}
+
+.pagination button:disabled {
+  color: #bbb;
+  cursor: not-allowed;
+}
+
+.pagination button.page-active {
+  background: #1677ff;
+  color: #fff;
+  border-color: #1677ff;
 }
 </style>
