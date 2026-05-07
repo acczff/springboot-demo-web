@@ -9,12 +9,12 @@ const router = createRouter({
     { path: '/', redirect: '/login' }, 
     { path: '/login', component: () => import('../views/Login.vue') }, 
     { 
-      path: '/', 
+      path: '/',
+      name: 'MainLayout', 
       component: MainLayout,
       children: [ 
         { path: 'home', component: () => import('../views/Home.vue') },
         { path: 'users', component: () => import('../views/Users.vue') },
-        { path: 'roles', component: () => import('../views/Roles.vue') },
       ]
     }    
   ]

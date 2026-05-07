@@ -9,7 +9,7 @@ export function validateLoginForm(account: string, password: string): string {
   }
 
   // 2. 格式校验：用户名只允许字母和数字，2-20位
-  const usernamePattern = /^[a-zA-Z0-9]{2,20}$/;
+  const usernamePattern = /^[\u4e00-\u9fa5a-zA-Z0-9]+$/;
   if (!usernamePattern.test(account.trim())) {
     return '用户名只能包含字母和数字，长度 2-20 位！';
   }

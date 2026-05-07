@@ -27,6 +27,8 @@ onMounted(async () => {
 const handleLogout = () => {
   localStorage.removeItem('token');
   userStore.setUsername('');
+  userStore.setRoles([]);
+  userStore.setAccessiblePaths([]);
   router.push('/login');
 };
 </script>
@@ -58,7 +60,7 @@ const handleLogout = () => {
             <!-- 二级菜单 -->
             <div v-show="expandedMenus.has(menu.id)">
               <router-link
-                v-for="child in menu.children"
+                v-for="child in menu.children.filter((c: any) => userStore.accessiblePaths.includes(c.path))"
                 :key="child.id"
                 :to="child.path"
                 class="nav-item nav-item-child"

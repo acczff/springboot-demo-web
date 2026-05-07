@@ -4,6 +4,7 @@ import router from '../router';
 import { useUserStore } from '../store/user';
 import { userApi } from '../api/user';
 import { validateLoginForm } from '../utils/validate';
+import { setupDynamicRoutes } from '../utils/permission';
 
 const userStore = useUserStore();
 const loginForm = ref({
@@ -14,7 +15,7 @@ const isLoading = ref(false);
 const errorMsg = ref('');
 
 const handleLogin = async () => {
-  
+
   //验证表单
   const error = validateLoginForm(loginForm.value.account, loginForm.value.password);
   if (error) {
@@ -32,10 +33,11 @@ const handleLogin = async () => {
 
     const token = res.token;
     const username = res.username || loginForm.value.account;
-
-    localStorage.setItem('token', token);
+    localStorage.setItem('token', token);  // 先存 token，getMenuList 需要它
     userStore.setUsername(username);
-
+    userStore.setRoles(res.roles || [])
+    const menuRes: any = await userApi.getMenuList()
+    await setupDynamicRoutes(menuRes)
     router.push('/home');
   } catch (error) {
     errorMsg.value = String(error);
