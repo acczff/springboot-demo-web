@@ -1,21 +1,32 @@
 # springboot-web 前端项目
 
-## 项目简介
+> **更新日期**: 2026-05-07  
+> **版本**: v2.0.0
 
-个人学习全栈开发过程中，使用 Vue 3 和 Spring Boot 构建的一个简单的前端项目。该项目主要用于展示如何与后端 API 进行交互，并实现基本的用户认证和数据展示功能。
+个人学习全栈开发过程中，使用 Vue 3 + TypeScript 构建的后台管理系统前端，对接 Spring Boot 后端，实现了完整的 RBAC 权限管理功能。
+
+## 功能清单
+
+- ✅ 登录 / 退出（Token 存储 + 路由守卫）
+- ✅ 首页（当前用户信息展示）
+- ✅ 用户管理（列表分页+搜索、新增、编辑、分配角色）
+- ✅ 角色管理（列表、新增、分配权限）
+- ✅ 动态侧边栏菜单（从后端拉取，可折叠展开）
+- ✅ 统一请求封装（Axios 拦截器，自动附带 Token）
+- ✅ 全局路由守卫（未登录跳转登录页）
+- ✅ 表单单元测试（Vitest）
 
 ## 技术栈
 
-- Vue 3 + TypeScript
-- Vue Router — 用于管理前端路由，实现页面间的导航
-- Pinia — 用于状态管理，集中管理应用的全局状态
-- Axios — 用于发送 HTTP 请求，与后端 API 进行交互
-- Vitest — 用于单元测试，确保代码功能正确
+- **框架**: Vue 3 + TypeScript + Vite
+- **路由**: Vue Router 4
+- **状态管理**: Pinia
+- **HTTP**: Axios（已封装拦截器）
+- **单元测试**: Vitest
 
 ## 启动步骤
 
 ```bash
-
 # 安装依赖
 npm install
 
@@ -24,24 +35,39 @@ npm run dev
 
 # 运行单元测试
 npm test
-
 ```
+
 ## 目录结构
 
-```bash
+```
 src/
-├── api/        # 存放与后端 API 交互的模块
-├── components/ # 存放可复用的 Vue 组件
-├── router/     # 存放路由配置文件
-├── store/      # 共享状态管理（Pinia）相关文件
-├── utils/      # 存放工具函数和辅助模块
-└── views/      # 存放页面级组件
+├── api/
+│   └── user.ts          # 所有后端 API 调用（登录/用户/角色/权限/菜单）
+├── layouts/
+│   └── MainLayout.vue   # 主布局（动态侧边栏 + Header + 路由出口）
+├── router/
+│   └── index.ts         # 路由配置 + 全局路由守卫
+├── store/
+│   └── user.ts          # 用户全局状态（Pinia）
+├── utils/
+│   ├── request.ts       # Axios 封装（baseURL + 拦截器）
+│   └── validate.ts      # 表单校验纯函数
+└── views/
+    ├── Login.vue         # 登录页
+    ├── Home.vue          # 首页
+    ├── Users.vue         # 用户管理页（分页+搜索+弹窗+分配角色）
+    └── Roles.vue         # 角色管理页（列表+分配权限）
 ```
 
-## 主要功能
+## 与后端对接说明
 
-```bash
-登录：
-Login.vue 页面使用 Axios 向后端api/auth/login 发送登录请求，获取 token 和 username，使用 localStorage.setItem('token', token); 存储 token，使用 Pinia 的 userStore保存 username 共享给其他组件。
-Home.vue  页面在 onMounted 生命周期钩子中调用 userApi.getCurrentUser() 获取当前用户信息，并将其存储在 Pinia 的 userStore 中，供其他组件使用。
-```
+- 后端地址：`http://localhost:8080`
+- 所有请求通过 `src/utils/request.ts` 统一发出，自动在 Header 携带 `token`
+- 响应拦截器自动解包 `res.data`，组件内直接使用数据，无需手动 `.data`
+- Token 存储在 `localStorage`，刷新后自动恢复登录状态
+
+## 测试账号
+
+| 用户名 | 密码 | 权限 |
+|--------|------|------|
+| admin | 123456 | 全部功能 |

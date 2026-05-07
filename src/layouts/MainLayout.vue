@@ -1,8 +1,28 @@
 <script setup lang="ts">
 import { useUserStore } from '../store/user';
+import { onMounted, ref } from 'vue';
+import { userApi } from '../api/user';
 import router from '../router';
 
 const userStore = useUserStore();
+const menuList = ref<any[]>([]);
+const expandedMenus = ref<Set<number>>(new Set());
+
+const toggleMenu = (id: number) => {
+  if (expandedMenus.value.has(id)) {
+    expandedMenus.value.delete(id);
+  } else {
+    expandedMenus.value.add(id);
+  }
+  // 触发响应式更新
+  expandedMenus.value = new Set(expandedMenus.value);
+};
+
+onMounted(async () => {
+  const res: any = await userApi.getMenuList();
+  menuList.value = res;
+  // 默认不展开
+});
 
 const handleLogout = () => {
   localStorage.removeItem('token');
@@ -29,9 +49,24 @@ const handleLogout = () => {
           <router-link to="/home" class="nav-item">
             <span class="nav-icon">🏠</span> 首页
           </router-link>
-          <router-link to="/users" class="nav-item">
-            <span class="nav-icon">👥</span> 用户管理
-          </router-link>
+          <!-- 动态菜单：一级菜单 -->
+          <div v-for="menu in menuList" :key="menu.id" class="nav-group">
+            <div class="nav-group-title" @click="toggleMenu(menu.id)">
+              <span><span class="nav-icon">📁</span> {{ menu.name }}</span>
+              <span class="nav-arrow" :class="{ expanded: expandedMenus.has(menu.id) }">▶</span>
+            </div>
+            <!-- 二级菜单 -->
+            <div v-show="expandedMenus.has(menu.id)">
+              <router-link
+                v-for="child in menu.children"
+                :key="child.id"
+                :to="child.path"
+                class="nav-item nav-item-child"
+              >
+                {{ child.name }}
+              </router-link>
+            </div>
+          </div>
         </nav>
       </aside>
 
@@ -131,6 +166,42 @@ const handleLogout = () => {
 
 .nav-icon {
   font-size: 16px;
+}
+
+.nav-group {
+  margin-top: 8px;
+}
+
+.nav-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+}
+
+.nav-group-title:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-arrow {
+  font-size: 10px;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.nav-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.nav-item-child {
+  padding-left: 32px;
+  font-size: 13px;
 }
 
 .layout-content {

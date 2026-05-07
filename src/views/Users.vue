@@ -16,6 +16,11 @@ const totalPages = computed(() => Math.ceil(total.value / pageSize.value)); // �
 const keyword = ref('')   // 搜索关键词
 const showDialog = ref(false);
 const editId = ref<number | null>(null);
+// 角色绑定弹窗
+const showRoleDialog = ref(false);
+const currentUser = ref<any>(null);
+const allRoles = ref<any[]>([]);
+const selectedRoleId = ref<number | null>(null);
 
 onMounted(
   () => {
@@ -64,6 +69,24 @@ const goToPage = (page: number) => {
   pageNum.value = page;
   loadUserList();
 }
+
+// 打开角色绑定弹窗
+const openRoleDialog = async (user: any) => {
+  currentUser.value = user;
+  const [roles, current]: any = await Promise.all([
+    userApi.getRoleList(),
+    userApi.getUserRoles(user.id)
+  ]);
+  allRoles.value = roles;
+  selectedRoleId.value = current.length > 0 ? current[0].id : null;
+  showRoleDialog.value = true;
+};
+
+// 提交角色绑定
+const handleRoleSubmit = async () => {
+  await userApi.assignUserRoles(currentUser.value.id, selectedRoleId.value ? [selectedRoleId.value] : []);
+  showRoleDialog.value = false;
+};
 </script>
 
 <template>
@@ -96,6 +119,7 @@ const goToPage = (page: number) => {
             <td>{{ user.email }}</td>
             <td>
               <button class="btn btn-edit" @click="openEditDialog(user)">编辑</button>
+              <button class="btn btn-default" @click="openRoleDialog(user)">分配角色</button>
             </td>
           </tr>
         </tbody>
@@ -129,6 +153,25 @@ const goToPage = (page: number) => {
         <div class="dialog-footer">
           <button class="btn btn-default" @click="showDialog = false">取消</button>
           <button class="btn btn-primary" @click="handleSubmit">保存</button>
+        </div>
+      </div>
+    </div>
+    <div v-if="showRoleDialog" class="dialog-mask" @click.self="showRoleDialog = false">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3 class="dialog-title">分配角色 — {{ currentUser?.username }}</h3>
+          <button class="dialog-close" @click="showRoleDialog = false">✕</button>
+        </div>
+        <div class="role-list">
+          <label v-for="role in allRoles" :key="role.id" class="role-item">
+            <input type="radio" :value="role.id" v-model="selectedRoleId" />
+            <span>{{ role.name }}</span>
+            <span class="role-desc">{{ role.description }}</span>
+          </label>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-default" @click="showRoleDialog = false">取消</button>
+          <button class="btn btn-primary" @click="handleRoleSubmit">保存</button>
         </div>
       </div>
     </div>
@@ -290,27 +333,79 @@ const goToPage = (page: number) => {
 .dialog {
   background: #fff;
   border-radius: 8px;
-  padding: 24px;
   width: 420px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .dialog-title {
+  margin: 0;
   font-size: 16px;
   font-weight: 600;
-  margin: 0 0 16px;
   color: #333;
 }
 
-.dialog-placeholder {
+.dialog-close {
+  background: none;
+  border: none;
+  font-size: 16px;
   color: #999;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.dialog-close:hover {
+  color: #333;
+}
+
+.form-item {
+  padding: 0 24px;
+  margin-bottom: 16px;
+}
+
+.form-item:first-of-type {
+  margin-top: 20px;
+}
+
+.form-item label {
+  display: block;
+  margin-bottom: 6px;
   font-size: 14px;
-  margin-bottom: 24px;
+  color: #555;
+}
+
+.form-item input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.form-item input:focus {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
 }
 
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 8px;
 }
 
 /* 分页 */
@@ -348,4 +443,27 @@ const goToPage = (page: number) => {
   color: #fff;
   border-color: #1677ff;
 }
+
+/* 角色绑定弹窗 */
+.role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.role-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.role-desc {
+  color: #888;
+  font-size: 12px;
+}
+
 </style>
