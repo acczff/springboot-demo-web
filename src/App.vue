@@ -13,6 +13,7 @@ onMounted(async () => {
       const res: any = await userApi.getCurrentUser()
       userStore.setUsername(res.username)
       userStore.setRoles(res.roles || [])
+      userStore.setPermissions(res.permissions || [])
       const menuRes: any = await userApi.getMenuList()
       await setupDynamicRoutes(menuRes)
     } catch {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { userApi } from '../api/user';
-
+import { hasPermission } from '../utils/permission';
 // 表单数据
 const form = ref({
   username: '',
@@ -94,7 +94,7 @@ const handleRoleSubmit = async () => {
     <!-- 页头 -->
     <div class="page-header">
       <h2 class="page-title">用户管理</h2>
-      <button class="btn btn-primary" @click="openAddDialog">+ 新增用户</button>
+      <button v-if="hasPermission('user:create')" class="btn btn-primary" @click="openAddDialog">+ 新增用户</button>
     </div>
     <!-- 搜索栏 -->
     <div class="search-bar">
@@ -118,8 +118,8 @@ const handleRoleSubmit = async () => {
             <td>{{ user.username }}</td>
             <td>{{ user.email }}</td>
             <td>
-              <button class="btn btn-edit" @click="openEditDialog(user)">编辑</button>
-              <button class="btn btn-default" @click="openRoleDialog(user)">分配角色</button>
+              <button v-if="hasPermission('user:update')" class="btn btn-edit" @click="openEditDialog(user)">编辑</button>
+              <button v-if="hasPermission('user:update')" class="btn btn-default" @click="openRoleDialog(user)">分配角色</button>
             </td>
           </tr>
         </tbody>

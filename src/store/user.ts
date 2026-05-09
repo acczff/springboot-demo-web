@@ -13,6 +13,7 @@ export const useUserStore = defineStore('user', () => {
     { name: '赵六', age: 19 }
   ])
   const roles = ref<string[]>([])
+  const permissions = ref<string[]>([])
   const accessiblePaths = ref<string[]>([])
 
   function setAccessiblePaths(paths: string[]) {
@@ -21,6 +22,10 @@ export const useUserStore = defineStore('user', () => {
 
   function setRoles(newRoles: string[]) {
     roles.value = newRoles
+  }
+
+  function setPermissions(newPerms: string[]) {
+    permissions.value = newPerms
   }
 
   // 2. 仓库管理员提供的“物资操作手册”（Actions）
@@ -40,7 +45,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   // 3. 把允许别人使用的物资和方法，统统交回出去
-  return { username, setUsername, employeeList, addEmployee, growUpEmployee, roles, setRoles, accessiblePaths, setAccessiblePaths }
+  return { username, setUsername, employeeList, addEmployee, growUpEmployee, roles, setRoles, permissions, setPermissions, accessiblePaths, setAccessiblePaths }
 })
 
 

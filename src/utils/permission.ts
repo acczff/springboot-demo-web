@@ -28,3 +28,13 @@ export async function setupDynamicRoutes(menuList: any[]) {
 
   userStore.setAccessiblePaths(paths)
 }
+
+export function hasPermission(code: string): boolean {
+  const userStore = useUserStore()
+  return userStore.permissions.includes(code)
+}
+
+export function hasRole(role: string): boolean {
+  const userStore = useUserStore()
+  return userStore.roles.includes(role)
+}

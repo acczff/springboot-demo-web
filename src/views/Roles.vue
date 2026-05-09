@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { userApi } from '../api/user';
-
+import { hasPermission } from '../utils/permission';
 
 const roleList = ref<any[]>([]);
 // 弹窗控制
@@ -65,7 +65,7 @@ const handlePermSubmit = async () => {
         <!-- 页头 -->
         <div class="page-header">
             <h2 class="page-title">角色管理</h2>
-            <button class="btn btn-primary" @click="createRole">+ 新增角色</button>
+            <button v-if="hasPermission('role:create')" class="btn btn-primary" @click="createRole">+ 新增角色</button>
         </div>
         <!-- 表格 -->
         <div class="table-wrapper">
@@ -84,7 +84,7 @@ const handlePermSubmit = async () => {
                         <td>{{ role.name }}</td>
                         <td>{{ role.description }}</td>
                         <td>
-                            <button class="btn btn-default" @click="openPermDialog(role)">分配权限</button>
+                            <button v-if="hasPermission('role:update')" class="btn btn-default" @click="openPermDialog(role)">分配权限</button>
                         </td>
                     </tr>
                 </tbody>
