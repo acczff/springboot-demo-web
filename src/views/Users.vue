@@ -30,8 +30,8 @@ onMounted(
 // 加载用户列表
 const loadUserList = async () => {
   const res: any = await userApi.getUserList(pageNum.value, pageSize.value, keyword.value);
-  userList.value = res.content;
-  total.value = res.totalElements;
+  userList.value = res.list;
+  total.value = res.total;
 }
 // 提交
 const handleSubmit = async () => {
@@ -119,7 +119,8 @@ const handleRoleSubmit = async () => {
             <td>{{ user.email }}</td>
             <td>
               <button v-if="hasPermission('user:update')" class="btn btn-edit" @click="openEditDialog(user)">编辑</button>
-              <button v-if="hasPermission('user:update')" class="btn btn-default" @click="openRoleDialog(user)">分配角色</button>
+              <button v-if="hasPermission('user:update')" class="btn btn-default"
+                @click="openRoleDialog(user)">分配角色</button>
             </td>
           </tr>
         </tbody>
@@ -465,5 +466,4 @@ const handleRoleSubmit = async () => {
   color: #888;
   font-size: 12px;
 }
-
 </style>
