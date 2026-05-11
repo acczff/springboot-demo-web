@@ -141,15 +141,15 @@ const handleRoleSubmit = async () => {
         <h3 class="dialog-title">{{ editId ? '编辑用户' : '新增用户' }}</h3>
         <div class="form-item">
           <label>用户名</label>
-          <input v-model="form.username" type="text" placeholder="请输入用户名" />
+          <input v-model="form.username" type="text" placeholder="请输入用户名" autocomplete="off" />
         </div>
-        <div class="form-item">
+        <div class="form-item" v-if="!editId">
           <label>密码</label>
-          <input v-model="form.password" type="password" placeholder="请输入密码" />
+          <input v-model="form.password" type="password" placeholder="请输入密码" autocomplete="new-password" />
         </div>
         <div class="form-item">
           <label>邮箱</label>
-          <input v-model="form.email" type="email" placeholder="请输入邮箱" />
+          <input v-model="form.email" type="email" placeholder="请输入邮箱" autocomplete="off" />
         </div>
         <div class="dialog-footer">
           <button class="btn btn-default" @click="showDialog = false">取消</button>
