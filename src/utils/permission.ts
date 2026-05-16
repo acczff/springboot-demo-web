@@ -4,6 +4,7 @@ import { useUserStore } from '../store/user'
 // path → 组件映射表，以后加新页面只在这里加一行
 const pathComponentMap: Record<string, () => Promise<any>> = {
   '/roles': () => import('../views/Roles.vue'),
+  '/workorders': () => import('../views/WorkOrders.vue'),
 }
 
 export async function setupDynamicRoutes(menuList: any[]) {
