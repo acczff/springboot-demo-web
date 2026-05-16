@@ -35,6 +35,7 @@ const handleLogin = async () => {
     const username = res.username || loginForm.value.account;
     localStorage.setItem('token', token);  // 先存 token，getMenuList 需要它
     userStore.setUsername(username);
+    userStore.setUserId(res.userId);
     userStore.setRoles(res.roles || [])
     userStore.setPermissions(res.permissions || [])
     const menuRes: any = await userApi.getMenuList()

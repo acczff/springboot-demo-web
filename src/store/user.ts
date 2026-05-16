@@ -7,6 +7,7 @@ export const useUserStore = defineStore('user', () => {
 
   // 1. 存放在仓库里的公共物资（State）
   const username = ref('')
+  const userId = ref<number | null>(null)
   const employeeList = ref([
     { name: '李四', age: 20 },
     { name: '王五', age: 22 },
@@ -34,6 +35,10 @@ export const useUserStore = defineStore('user', () => {
     username.value = newName
   }
 
+  function setUserId(id: number) {
+    userId.value = id
+  }
+
   function addEmployee(employee: { name: string; age: number }) {
     employeeList.value.push(employee)
   }
@@ -45,7 +50,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   // 3. 把允许别人使用的物资和方法，统统交回出去
-  return { username, setUsername, employeeList, addEmployee, growUpEmployee, roles, setRoles, permissions, setPermissions, accessiblePaths, setAccessiblePaths }
+  return { username, userId, setUsername, setUserId, employeeList, addEmployee, growUpEmployee, roles, setRoles, permissions, setPermissions, accessiblePaths, setAccessiblePaths }
 })
 
 
