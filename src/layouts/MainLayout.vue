@@ -26,7 +26,10 @@ onMounted(async () => {
 
 const handleLogout = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('userId');
+  localStorage.removeItem('username');
   userStore.setUsername('');
+  userStore.setUserId(0);
   userStore.setRoles([]);
   userStore.setAccessiblePaths([]);
   router.push('/login');

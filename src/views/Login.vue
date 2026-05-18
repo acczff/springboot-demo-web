@@ -34,6 +34,8 @@ const handleLogin = async () => {
     const token = res.token;
     const username = res.username || loginForm.value.account;
     localStorage.setItem('token', token);  // 先存 token，getMenuList 需要它
+    localStorage.setItem('userId', String(res.userId));
+    localStorage.setItem('username', username);
     userStore.setUsername(username);
     userStore.setUserId(res.userId);
     userStore.setRoles(res.roles || [])

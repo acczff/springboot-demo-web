@@ -2,9 +2,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { workorderApi } from '../api/workorder';
 import { useUserStore } from '../store/user';
+import { workreportApi } from '../api/workreport';
 
 const userStore = useUserStore();
-
 const workOrdersList = ref<any[]>([]);
 const pageNum = ref(1)      // 当前第几页
 const pageSize = ref(10)    // 每页几条
@@ -12,6 +12,9 @@ const total = ref(0)        // 总条数（从后端拿到后存起来）
 const totalPages = computed(() => Math.ceil(total.value / pageSize.value)); // 总页数（计算属性，根据 total 和 pageSize 计算得出）
 const workOrderStatus = ref(''); // 工单状态筛选条件
 const showCreateDialog = ref(false); // 是否显示创建工单的对话框
+const selectedOrder = ref<any>(null); // 当前选中的工单（用于显示详情）
+const workReports = ref<any[]>([]); // 当前选中工单的工序报表列表
+const showDetailDialog = ref(false); // 是否显示工单详情对话框
 const productOptions = [
     { id: 1, name: '标准椅子 (P001)' },
     { id: 2, name: '办公桌 (P002)' },
@@ -60,11 +63,54 @@ const removeItem = (index: number) => {
 }
 // 提交
 const submitCreate = async () => {
+    if (!createForm.value.name.trim()) {
+        alert('请输入工单名称')
+        return
+    }
+    for (let i = 0; i < createForm.value.workOrderItemRequests.length; i++) {
+        const item = createForm.value.workOrderItemRequests[i]
+        if (!item.productId) {
+            alert(`第 ${i + 1} 行明细：请选择产品`)
+            return
+        }
+        if (!item.plannedQty || item.plannedQty < 1) {
+            alert(`第 ${i + 1} 行明细：计划数量至少为 1`)
+            return
+        }
+    }
     createForm.value.createdBy = userStore.userId
+    if (!createForm.value.createdBy) {
+        alert('用户信息已过期，请重新登录')
+        return
+    }
     await workorderApi.createWorkOrder(createForm.value)
     showCreateDialog.value = false
     createForm.value = { name: '', createdBy: null, workOrderItemRequests: [{ productId: null, plannedQty: 1 }] }
     loadWorkOrdersList()
+}
+
+const startWorkOrder = async (workOrderId: number) => {
+    await workorderApi.startWorkOrder(workOrderId);
+    loadWorkOrdersList();
+}
+
+const completeWorkOrder = async (workOrderId: number) => {
+    await workorderApi.completeWorkOrder(workOrderId);
+    loadWorkOrdersList();
+}
+
+const cancelWorkOrder = async (workOrderId: number) => {
+    await workorderApi.cancelWorkOrder(workOrderId);
+    loadWorkOrdersList();
+}
+
+const openDetailDialog = async (workOrder: any) => {
+    selectedOrder.value = workOrder;
+    const detailRes: any = await workorderApi.getWorkOrderDetails(workOrder.id);
+    selectedOrder.value = { ...selectedOrder.value, ...detailRes };
+    const res: any = await workreportApi.getReportsByWorkOrderId(workOrder.id, pageNum.value, pageSize.value);
+    workReports.value = res.list;
+    showDetailDialog.value = true;
 }
 </script>
 
@@ -73,15 +119,17 @@ const submitCreate = async () => {
         <!-- 页头 -->
         <div class="page-header">
             <h2 class="page-title">工单管理</h2>
-            <button @click="showCreateDialog = true">创建工单</button>
-        </div>
-        <!-- 搜索栏 -->
-        <div class="search-bar">
-            <select v-model="workOrderStatus" class="search-select" @change="loadWorkOrdersList">
-                <option value="">全部状态</option>
-                <option value="DRAFT">DRAFT</option>
-                <option value="ISSUED">ISSUED</option>
-            </select>
+            <div class="page-actions">
+                <select v-model="workOrderStatus" class="search-select" @change="loadWorkOrdersList">
+                    <option value="">全部状态</option>
+                    <option value="DRAFT">DRAFT</option>
+                    <option value="ISSUED">ISSUED</option>
+                    <option value="IN_PROGRESS">IN_PROGRESS</option>
+                    <option value="COMPLETED">COMPLETED</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                </select>
+                <button class="btn-primary" @click="showCreateDialog = true">创建工单</button>
+            </div>
         </div>
         <!-- 表格 -->
         <div class="table-wrapper">
@@ -99,13 +147,19 @@ const submitCreate = async () => {
                 <tbody>
                     <tr v-for="workOrder in workOrdersList" :key="workOrder.id">
                         <td>{{ workOrder.id }}</td>
-                        <td>{{ workOrder.name }}</td>
-                        <td>{{ workOrder.status }}</td>
+                        <td @click="openDetailDialog(workOrder)">{{ workOrder.name }}</td>
+                        <td><span :class="'status-badge status-' + workOrder.status.toLowerCase()">{{ workOrder.status }}</span></td>
                         <td>{{ workOrder.createdByName }}</td>
                         <td>{{ new Date(workOrder.createdTime).toLocaleString() }}</td>
-                        <td>
-                            <button v-if="workOrder.status === 'DRAFT'"
+                        <td class="action-cell">
+                            <button v-if="workOrder.status === 'DRAFT'" class="btn-action btn-issue"
                                 @click="issueWorkOrder(workOrder.id)">下发</button>
+                            <button v-if="workOrder.status === 'ISSUED'" class="btn-action btn-start"
+                                @click="startWorkOrder(workOrder.id)">开始生产</button>
+                            <button v-if="workOrder.status === 'IN_PROGRESS'" class="btn-action btn-complete"
+                                @click="completeWorkOrder(workOrder.id)">完工</button>
+                            <button v-if="workOrder.status === 'ISSUED' || workOrder.status === 'IN_PROGRESS'" class="btn-action btn-cancel"
+                                @click="cancelWorkOrder(workOrder.id)">取消</button>
                         </td>
                     </tr>
                 </tbody>
@@ -145,9 +199,11 @@ const submitCreate = async () => {
                     <div v-for="(item, index) in createForm.workOrderItemRequests" :key="index" class="item-row">
                         <select v-model.number="item.productId" class="item-select">
                             <option :value="null" disabled>请选择产品</option>
-                            <option v-for="product in productOptions" :key="product.id" :value="product.id">{{ product.name }}</option>
+                            <option v-for="product in productOptions" :key="product.id" :value="product.id">{{
+                                product.name }}</option>
                         </select>
-                        <input v-model.number="item.plannedQty" type="number" min="1" class="item-qty" placeholder="数量" />
+                        <input v-model.number="item.plannedQty" type="number" min="1" class="item-qty"
+                            placeholder="数量" />
                         <button class="btn btn-danger btn-sm" @click="removeItem(index)"
                             :disabled="createForm.workOrderItemRequests.length === 1">删除</button>
                     </div>
@@ -155,6 +211,49 @@ const submitCreate = async () => {
                 <div class="dialog-footer">
                     <button class="btn btn-default" @click="showCreateDialog = false">取消</button>
                     <button class="btn btn-primary" @click="submitCreate">提交</button>
+                </div>
+            </div>
+        </div>
+        <!-- 工单详情弹窗 -->
+        <div v-if="showDetailDialog" class="dialog-mask">
+            <div class="dialog detail-dialog">
+                <div class="dialog-header">
+                    <h3 class="dialog-title">工单详情 - {{ selectedOrder.name }}</h3>
+                    <button class="dialog-close" @click="showDetailDialog = false">✕</button>
+                </div>
+                <div class="detail-body">
+                <div class="detail-grid">
+                    <div class="detail-field"><span class="detail-label">工单名称</span><span class="detail-value">{{ selectedOrder.name }}</span></div>
+                    <div class="detail-field"><span class="detail-label">状态</span><span :class="'status-badge status-' + selectedOrder.status.toLowerCase()">{{ selectedOrder.status }}</span></div>
+                    <div class="detail-field"><span class="detail-label">创建人</span><span class="detail-value">{{ selectedOrder.createdByName }}</span></div>
+                    <div class="detail-field"><span class="detail-label">创建时间</span><span class="detail-value">{{ new Date(selectedOrder.createdTime).toLocaleString() }}</span></div>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-section-title">工单明细</div>
+                    <table class="table">
+                        <thead><tr><th>产品名称</th><th>计划数量</th><th>已完成数量</th></tr></thead>
+                        <tbody>
+                            <tr v-for="(item, index) in selectedOrder.items" :key="index">
+                                <td>{{ item.product.name }}</td><td>{{ item.plannedQty }}</td><td>{{ item.completedQty }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="detail-section">
+                    <div class="detail-section-title">报工记录</div>
+                    <table class="table">
+                        <thead><tr><th>报工人</th><th>报工数量</th><th>状态</th><th>报工时间</th></tr></thead>
+                        <tbody>
+                            <tr v-for="(report, index) in workReports" :key="index">
+                                <td>{{ report.reportedByName }}</td>
+                                <td>{{ report.reportedQty }}</td>
+                                <td><span :class="'status-badge status-' + report.status.toLowerCase()">{{ report.status }}</span></td>
+                                <td>{{ report.reportedTime ? new Date(report.reportedTime).toLocaleString() : '-' }}</td>
+                            </tr>
+                            <tr v-if="workReports.length === 0"><td colspan="4" style="text-align:center;color:#999;padding:16px">暂无报工记录</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 </div>
             </div>
         </div>
@@ -181,6 +280,12 @@ const submitCreate = async () => {
 
 .search-bar {
     margin-bottom: 12px;
+}
+
+.page-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .search-select {
@@ -264,7 +369,7 @@ const submitCreate = async () => {
 }
 
 /* 页头"创建工单"按钮 */
-.page-header > button {
+.page-header>button {
     padding: 6px 16px;
     border: none;
     border-radius: 4px;
@@ -274,7 +379,7 @@ const submitCreate = async () => {
     font-size: 14px;
 }
 
-.page-header > button:hover {
+.page-header>button:hover {
     background-color: #4096ff;
 }
 
@@ -385,7 +490,7 @@ const submitCreate = async () => {
     margin-top: 20px;
 }
 
-.form-item > label {
+.form-item>label {
     display: block;
     margin-bottom: 6px;
     font-size: 14px;
@@ -469,5 +574,64 @@ const submitCreate = async () => {
     border: 1px solid #d9d9d9;
     border-radius: 10px;
     padding: 1px 8px;
+}
+
+/* ── 状态徽章 ── */
+.status-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.status-draft       { background: #f5f5f5; color: #595959; border: 1px solid #d9d9d9; }
+.status-issued      { background: #e6f4ff; color: #1677ff; border: 1px solid #91caff; }
+.status-in_progress { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+.status-completed   { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+.status-cancelled   { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+.status-submitted   { background: #e6f4ff; color: #1677ff; border: 1px solid #91caff; }
+.status-approved    { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+.status-rejected    { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+
+/* ── 操作按钮 ── */
+.action-cell { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.btn-action {
+    padding: 3px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+}
+.btn-issue    { background: #e6f4ff; color: #1677ff; border: 1px solid #91caff; }
+.btn-issue:hover    { background: #bae0ff; }
+.btn-start    { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+.btn-start:hover    { background: #ffe7ba; }
+.btn-complete { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+.btn-complete:hover { background: #d9f7be; }
+.btn-cancel   { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+.btn-cancel:hover   { background: #ffccc7; }
+
+/* ── 详情弹窗 ── */
+.detail-dialog { width: 640px; max-width: 95vw; }
+.detail-body { max-height: 70vh; overflow-y: auto; padding: 16px 24px 8px; }
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 24px;
+    margin-bottom: 20px;
+}
+.detail-field { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.detail-label { font-size: 12px; color: #8c8c8c; }
+.detail-value { font-size: 14px; color: #262626; font-weight: 500; }
+.detail-section { margin-bottom: 20px; }
+.detail-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #595959;
+    margin-bottom: 8px;
+    padding-left: 8px;
+    border-left: 3px solid #1677ff;
 }
 </style>
