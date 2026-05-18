@@ -5,6 +5,7 @@ import { useUserStore } from '../store/user'
 const pathComponentMap: Record<string, () => Promise<any>> = {
   '/roles': () => import('../views/Roles.vue'),
   '/workorders': () => import('../views/WorkOrders.vue'),
+  '/workreports': () => import('../views/WorkReports.vue'),
 }
 
 export async function setupDynamicRoutes(menuList: any[]) {

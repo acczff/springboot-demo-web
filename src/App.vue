@@ -8,7 +8,7 @@ const userStore = useUserStore();
 
 onMounted(async () => {
   const token = localStorage.getItem('token');
-  if (token && !userStore.username) {
+  if (token) {
     try {
       const res: any = await userApi.getCurrentUser()
       userStore.setUsername(res.username)
