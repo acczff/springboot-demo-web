@@ -78,6 +78,14 @@ const submitCreate = async () => {
         const qty = itemQtys.value[i]
         if (!qty || qty <= 0) continue
         const item = selectedOrderItems.value[i]
+        // 前端防御：已完成的产品跳过
+        if (item.completedQty >= item.plannedQty) continue
+        // 前端防御：不允许超出剩余量
+        const remaining = item.plannedQty - item.completedQty
+        if (qty > remaining) {
+            alert(`产品【${item.product?.name}】剩余计划量为 ${remaining}，不能报工 ${qty}`)
+            return
+        }
         await workreportApi.createReport(
             selectedWorkOrderId.value!,
             qty,
@@ -247,7 +255,12 @@ const confirmReject = async () => {
                                 <td>{{ item.product?.name || '-' }}</td>
                                 <td>{{ item.plannedQty }}</td>
                                 <td>{{ item.completedQty }}</td>
-                                <td><input v-model.number="itemQtys[i]" type="number" min="0" style="width:70px;padding:3px 6px;border:1px solid #d9d9d9;border-radius:4px;" /></td>
+                                <td>
+                                    <span v-if="item.completedQty >= item.plannedQty" class="done-badge">已完成</span>
+                                    <input v-else v-model.number="itemQtys[i]" type="number" min="0"
+                                        :max="item.plannedQty - item.completedQty"
+                                        style="width:70px;padding:3px 6px;border:1px solid #d9d9d9;border-radius:4px;" />
+                                </td>
                             </tr>
                             <tr v-if="selectedOrderItems.length === 0">
                                 <td colspan="4" style="text-align:center;color:#999">加载中...</td>
@@ -554,6 +567,7 @@ const confirmReject = async () => {
 .items-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .items-table th, .items-table td { padding: 6px 8px; border: 1px solid #e8e8e8; text-align: left; }
 .items-table thead tr { background: #fafafa; font-weight: 600; }
+.done-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; font-size: 12px; }
 
 .btn {
     padding: 6px 16px;
