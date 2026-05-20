@@ -17,7 +17,7 @@ onMounted(async () => {
       const menuRes: any = await userApi.getMenuList()
       await setupDynamicRoutes(menuRes)
     } catch {
-      // token 失效，拦截器会自动跳登录页
+      // token 失效，拦截器会自动跳登录页 
     }
   }
 });
